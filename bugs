@@ -1,0 +1,4 @@
+#anaconder prompt
+cd C:\Users\xxxx\gui_development
+pyinstaller main1.spec
+
