@@ -1,0 +1,99 @@
+import tkinter as tk
+from tkinter import filedialog, ttk
+import pandas as pd
+
+def upload_file():
+    file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
+    if file_path:
+        global df
+        df = pd.read_excel(file_path)
+        sort_column_menu['values'] = df.columns.tolist()  # Populate the sort dropdown
+        filter_column_menu['values'] = df.columns.tolist()  # Populate the filter dropdown
+        display_data(df)
+
+def display_data(df):
+    for widget in frame.winfo_children():
+        widget.destroy()  # Clear previous data
+
+    table = ttk.Treeview(frame)
+    table['columns'] = list(df.columns)
+    table['show'] = 'headings'
+
+    for col in table['columns']:
+        table.heading(col, text=col)
+
+    for row in df.to_numpy():
+        table.insert("", "end", values=row)
+
+    table.pack(fill=tk.BOTH, expand=True)
+
+def sort_data():
+    selected_column = sort_column_var.get()
+    ascending_order = sort_order_var.get()
+    if selected_column:
+        sorted_df = df.sort_values(by=selected_column, ascending=(ascending_order == 'Ascending'))
+        display_data(sorted_df)
+
+def filter_data():
+    selected_column = filter_column_var.get()
+    filter_value = filter_value_var.get()
+    if selected_column and filter_value:
+        filtered_df = df[df[selected_column].astype(str) == filter_value]
+        display_data(filtered_df)
+
+def save_file():
+    file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
+    if file_path:
+        df.to_excel(file_path, index=False)
+
+# Initialize the root window
+root = tk.Tk()
+root.title("Excel Data Manipulation")
+
+# Upload and Save buttons
+upload_button = tk.Button(root, text="Upload Excel File", command=upload_file)
+upload_button.pack()
+
+save_button = tk.Button(root, text="Save File", command=save_file)
+save_button.pack()
+
+# Sorting UI
+sort_column_var = tk.StringVar()
+sort_order_var = tk.StringVar(value='Ascending')
+
+sort_column_label = tk.Label(root, text="Sort by:")
+sort_column_label.pack()
+sort_column_menu = ttk.Combobox(root, textvariable=sort_column_var)
+sort_column_menu.pack()
+
+sort_ascending_radio = tk.Radiobutton(root, text="Ascending", variable=sort_order_var, value='Ascending')
+sort_descending_radio = tk.Radiobutton(root, text="Descending", variable=sort_order_var, value='Descending')
+sort_ascending_radio.pack()
+sort_descending_radio.pack()
+
+sort_button = tk.Button(root, text="Sort Data", command=sort_data)
+sort_button.pack()
+
+# Filtering UI
+filter_column_var = tk.StringVar()
+filter_value_var = tk.StringVar()
+
+filter_column_label = tk.Label(root, text="Filter by:")
+filter_column_label.pack()
+filter_column_menu = ttk.Combobox(root, textvariable=filter_column_var)
+filter_column_menu.pack()
+
+filter_value_label = tk.Label(root, text="Filter value:")
+filter_value_label.pack()
+filter_value_entry = tk.Entry(root, textvariable=filter_value_var)
+filter_value_entry.pack()
+
+filter_button = tk.Button(root, text="Filter Data", command=filter_data)
+filter_button.pack()
+
+# Frame for displaying data
+frame = tk.Frame(root)
+frame.pack(fill=tk.BOTH, expand=True)
+
+# Run the main loop
+root.mainloop()
